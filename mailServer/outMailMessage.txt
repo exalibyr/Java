@@ -1,0 +1,6 @@
+From:  first@mail.com
+To:  second@mail.com
+Subject:  topic
+Message:  
+There must be something interesting for you here,
+but i ain't gonna tell you anything:)
