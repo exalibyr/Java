@@ -1,0 +1,4 @@
+snickers / 0.8
+baunty / 0.8
+chupa-chups / 0.3
+chew-gum / 0.4
