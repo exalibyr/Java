@@ -2,15 +2,16 @@ package com.company;
 
 import java.util.Date;
 
-public class Task {
+public class Task { //класс задача, содержащий информацию о запланированной задаче
+
     private String name;
     private Date date;
+    private int number;
 
-    Task(String task, FormatConverter formatConverter){
+    Task(int number, String task, FormatConverter formatConverter){
         boolean isTime = true;
         for(String line: task.split("/")){
             if(isTime){
-                //FormatConverter formatConverter = new FormatConverter();
                 date = formatConverter.format(line);
                 isTime = false;
             }
@@ -18,6 +19,7 @@ public class Task {
                 name = line;
             }
         }
+        this.number = number;
     }
 
     public String getName() {
@@ -36,9 +38,17 @@ public class Task {
         this.date = date;
     }
 
+    public int getNumber() {
+        return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+
     @Override
     public String toString() {
-        return "Task{" +
+        return "Task#" + number + " {" +
                 "name='" + name + '\'' +
                 ", date=" + date.toString() +
                 '}';

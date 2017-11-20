@@ -4,11 +4,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class FormatConverter {
+public class FormatConverter { //объект класса формирует из строки дату по установленному формату
     private SimpleDateFormat format;
-//    FormatConverter(){
-//        format = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-//    }
 
     public void setFormat(SimpleDateFormat format) {
         this.format = format;

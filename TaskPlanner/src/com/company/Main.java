@@ -24,11 +24,13 @@ public class Main {
             Scanner read = new Scanner(new FileInputStream("tasks.txt"));
             FormatConverter formatConverter = new FormatConverter();
             formatConverter.setFormat(new SimpleDateFormat("dd.MM.yyyy HH:mm:ss"));
+            int i=1;
             while(read.hasNextLine()){
-                tasks.add(new Task(read.nextLine(), formatConverter));
+                tasks.add(new Task(i, read.nextLine(), formatConverter));
+                i++;
             }
             read.close();
-            ListOfTasks list = new ListOfTasks(tasks);
+            ListOfTasks list = new ListOfTasks(tasks); //можно и без класса ListOfTasks прост так сделал
             Notificator notificator = new Notificator();
             System.out.println("Enter a period(only parameters - today, tomorrow, this week, next week," +
                     " this month, this year, any date of format dd.mm.yyyy " +

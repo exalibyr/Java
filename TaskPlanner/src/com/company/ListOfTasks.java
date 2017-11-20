@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListOfTasks {
+
     private List<Task> tasks;
 
     ListOfTasks(List<Task> tasks){
