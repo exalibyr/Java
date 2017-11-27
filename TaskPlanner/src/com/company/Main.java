@@ -11,37 +11,18 @@
 
 package com.company;
 
-        import java.io.*;
-        import java.text.ParseException;
-        import java.text.SimpleDateFormat;
         import java.util.*;
 
 public class Main {
 
-    public static void main(String[] args) throws ParseException{
-        List<Task> tasks = new ArrayList<>();
-        try{
-            Scanner read = new Scanner(new FileInputStream("tasks.txt"));
-            FormatConverter formatConverter = new FormatConverter();
-            formatConverter.setFormat(new SimpleDateFormat("dd.MM.yyyy HH:mm:ss"));
-            int i=1;
-            while(read.hasNextLine()){
-                tasks.add(new Task(i, read.nextLine(), formatConverter));
-                i++;
-            }
-            read.close();
-            ListOfTasks list = new ListOfTasks(tasks); //можно и без класса ListOfTasks прост так сделал
-            Notificator notificator = new Notificator();
-            System.out.println("Enter a period(only parameters - today, tomorrow, this week, next week," +
-                    " this month, this year, any date of format dd.mm.yyyy " +
-                    "or range of format dd.mm.yyyy-dd.mm.yyyy - is admitted) ");
-            Scanner in = new Scanner(System.in);
-            notificator.setPeriod(in.nextLine());
-            notificator.showTasks(list);
-            in.close();
-        }catch (IOException ex){
-            ex.printStackTrace();
-        }
-
+    public static void main(String[] args){
+        TaskReader.readFromFile("Tasks.txt");
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter a period(only parameters - today, tomorrow, this week, next week," +
+                " this month, this year, any date of format dd.mm.yyyy " +
+                "or range of format dd.mm.yyyy-dd.mm.yyyy - is admitted) ");
+        Notificator.showTasks(Task.getTasks(),
+                PeriodConverter.getPeriodFromString(in.nextLine()));
+        in.close();
     }
 }

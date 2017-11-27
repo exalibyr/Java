@@ -1,12 +1,15 @@
 package com.company;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-public class Task { //класс задача, содержащий информацию о запланированной задаче
+public class Task {
 
     private String name;
     private Date date;
     private int number;
+    private static List<Task> tasks = new ArrayList<>();
 
     Task(int number, String task, FormatConverter formatConverter){
         boolean isTime = true;
@@ -20,35 +23,21 @@ public class Task { //класс задача, содержащий информ
             }
         }
         this.number = number;
+        tasks.add(this);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public Date getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
+    public static List<Task> getTasks() {
+        return tasks;
     }
 
     @Override
     public String toString() {
-        return "Task#" + number + " {" +
+        return "\nTask#" + number + " {" +
                 "name='" + name + '\'' +
                 ", date=" + date.toString() +
                 '}';
