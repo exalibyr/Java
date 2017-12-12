@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Music>
+    <Song>
+        <Title>Monster</Title>
+        <Author>Skillet</Author>
+        <Album>Awake</Album>
+        <Duration>3:50</Duration>
+    </Song>
+    <Song>
+        <Title>Blow me away</Title>
+        <Author>Breaking Benjamin</Author>
+        <Album>Cold</Album>
+        <Duration>3:20</Duration>
+    </Song>
+    <Song>
+        <Title>Takeover</Title>
+        <Author>Avery Watts</Author>
+        <Album>Unknown</Album>
+        <Duration>4:10</Duration>
+    </Song>
+</Music>

@@ -1,0 +1,10 @@
+Math / 8
+Geometry / 10
+English / 2
+Latin / 5
+Biology / 4
+Chemistry / 5
+History / 6
+Physics / 4
+Practice / 10
+Anatomy / 4
