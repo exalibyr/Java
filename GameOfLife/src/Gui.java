@@ -13,25 +13,35 @@ public class Gui extends JFrame{
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		MyTableModel gameFieldData = new MyTableModel();
-		JTable gameFieldTable = new JTable(gameFieldData, new MyTableColumnModel());
+		GuiCreator guiCreator = new GuiCreator();
+		JTable gameFieldTable = guiCreator.initGameFieldTable(gameFieldData);
 		GameLogic gameLogic = new GameLogic(gameFieldTable, gameFieldData);
 
-		JPanel panel = new JPanel();
-		JButton stopGameButton = new JButton("Stop");
-		JButton oneStepButton = new JButton("One step");
-		JButton startGameButton = new JButton("Start game");
-		JButton cleanCellsButton = new JButton("Clean cells");
-		JLabel infoLabel = new JLabel();
-
-		JPanel checkBoxesPanel = new JPanel();
+		JButton stopGameButton = guiCreator.initStopGameButton();
+		JButton oneStepButton = guiCreator.initOneStepButton();
+		JButton startGameButton = guiCreator.initStartGameButton();
+		JButton cleanCellsButton = guiCreator.initCleanCellsButton();
+		JLabel infoLabel = guiCreator.initInfoLabel();
 		JCheckBox unlimitedBordersCheckBox = new JCheckBox("Unlimited borders", false);
 		JCheckBox drawingModeCheckBox = new JCheckBox("Drawing mode", false);
+
+		JPanel panel = new JPanel();
+		JPanel checkBoxesPanel = guiCreator.initCheckBoxesPanel();
 		checkBoxesPanel.add(unlimitedBordersCheckBox);
 		checkBoxesPanel.add(drawingModeCheckBox);
-		checkBoxesPanel.setBorder(BorderFactory.createTitledBorder("Options"));
-		checkBoxesPanel.setBackground(Color.ORANGE);
-		checkBoxesPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-		checkBoxesPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+		panel.add(gameFieldTable);
+		panel.add(cleanCellsButton);
+		panel.add(startGameButton);
+		panel.add(stopGameButton);
+		panel.add(oneStepButton);
+		panel.add(infoLabel);
+		panel.setBackground(Color.ORANGE);
+
+		getContentPane().add(BorderLayout.WEST, panel);
+		getContentPane().add(checkBoxesPanel);
+		setPreferredSize(new Dimension(1920, 1080));
+		pack();
+		setVisible(true);
 
 		drawingModeCheckBox.addItemListener(new ItemListener() {
 			@Override
@@ -60,14 +70,6 @@ public class Gui extends JFrame{
 				}
 			}
 		});
-
-		gameFieldTable.setPreferredSize(new Dimension(700, 700));
-		gameFieldTable.setDefaultRenderer(Cell.class, new MyTableCellRenderer());
-		gameFieldTable.setCellSelectionEnabled(false);
-		gameFieldTable.setFocusable(false);
-		gameFieldTable.setGridColor(Color.RED);
-		gameFieldTable.setRowHeight(700 / gameFieldTable.getModel().getRowCount());
-		panel.add(gameFieldTable);
 
 		gameFieldTable.addMouseListener(new MouseListener() {
 			@Override
@@ -102,21 +104,6 @@ public class Gui extends JFrame{
 			@Override
 			public void mouseClicked(MouseEvent e) { }
 		});
-
-		stopGameButton.setPreferredSize(new Dimension(100, 50));
-		stopGameButton.setEnabled(false);
-		startGameButton.setPreferredSize(new Dimension(100, 50));
-		cleanCellsButton.setPreferredSize(new Dimension(100, 50));
-		oneStepButton.setPreferredSize(new Dimension(100, 50));
-		infoLabel.setPreferredSize(new Dimension(150, 50));
-		infoLabel.setForeground(Color.RED);
-		panel.add(cleanCellsButton);
-		panel.add(startGameButton);
-		panel.add(stopGameButton);
-		panel.add(oneStepButton);
-		panel.add(infoLabel);
-		panel.setBackground(Color.ORANGE);
-
 
 		stopGameButton.addActionListener(new ActionListener() {
 			@Override
@@ -169,11 +156,8 @@ public class Gui extends JFrame{
 				}
 			}
 		});
-
-		getContentPane().add(BorderLayout.WEST, panel);
-		getContentPane().add(checkBoxesPanel);
-		setPreferredSize(new Dimension(1920, 1080));
-		pack();
-		setVisible(true);
 	}
+
+
+
 }

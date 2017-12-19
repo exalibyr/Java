@@ -5,7 +5,7 @@ import java.util.TimerTask;
 
 public class GameLogic {
 
-    //private Cell currentCell;
+    private Cell currentCell;
     private MyTableModel gameFieldData;
     private JTable gameFieldTable;
 
@@ -69,16 +69,16 @@ public class GameLogic {
                     isFirstCell = false;
 
                 }
-                if(gameFieldData.getCellState(rowIndex, columnIndex) == firstCellState){
-                    gameFieldData.setCellState(!firstCellState, rowIndex, columnIndex);
+                currentCell = gameFieldData.getValueAt(rowIndex, columnIndex);
+                if(currentCell.isAlive() == firstCellState){
+                    currentCell.setState(!firstCellState);
                     if(firstCellState){
                         aliveCellsAmount--;
                     }
                     else {
                         aliveCellsAmount++;
                     }
-                    gameFieldData.setValueAt(gameFieldData.getValueAt(rowIndex, columnIndex),
-                            rowIndex, columnIndex);
+                    gameFieldData.setValueAt(currentCell, rowIndex, columnIndex);
                 }
                 if(!isMousePressed){
                     gameExecutionTimer.cancel();
@@ -95,25 +95,25 @@ public class GameLogic {
     }
 
     public void changeCellState(int rowIndex, int columnIndex){
-//        currentCell = gameFieldData.getValueAt(rowIndex, columnIndex);
-//        if(currentCell.isAlive()) {
-//            currentCell.setState(false);
-//            aliveCellsAmount--;
-//        }
-//        else {
-//            currentCell.setState(true);
-//            aliveCellsAmount++;
-//        }
-//        gameFieldData.setValueAt(currentCell, rowIndex, columnIndex);
-        if(gameFieldData.getCellState(rowIndex, columnIndex)) {
-            gameFieldData.setCellState(false, rowIndex, columnIndex);
+        currentCell = gameFieldData.getValueAt(rowIndex, columnIndex);
+        if(currentCell.isAlive()) {
+            currentCell.setState(false);
             aliveCellsAmount--;
         }
         else {
-            gameFieldData.setCellState(true, rowIndex, columnIndex);
+            currentCell.setState(true);
             aliveCellsAmount++;
         }
-        gameFieldData.setValueAt(gameFieldData.getValueAt(rowIndex, columnIndex), rowIndex, columnIndex);
+        gameFieldData.setValueAt(currentCell, rowIndex, columnIndex);
+//        if(gameFieldData.getCellState(rowIndex, columnIndex)) {
+//            gameFieldData.setCellState(false, rowIndex, columnIndex);
+//            aliveCellsAmount--;
+//        }
+//        else {
+//            gameFieldData.setCellState(true, rowIndex, columnIndex);
+//            aliveCellsAmount++;
+//        }
+//        gameFieldData.setValueAt(gameFieldData.getValueAt(rowIndex, columnIndex), rowIndex, columnIndex);
     }
 
     private void evaluateInternalCells(){
@@ -621,11 +621,11 @@ public class GameLogic {
     public void cleanCells(){
         for (int i = 0; i < rowAmount; i++) {
             for (int j = 0; j < columnAmount; j++) {
-//                    currentCell = gameFieldData.getValueAt(i, j);
-//                    currentCell.setState(false);
-//                    gameFieldData.setValueAt(currentCell, i, j);
-                gameFieldData.setCellState(false, i, j);
-                gameFieldData.setValueAt(gameFieldData.getValueAt(i, j), i, j);
+                currentCell = gameFieldData.getValueAt(i, j);
+                currentCell.setState(false);
+                gameFieldData.setValueAt(currentCell, i, j);
+//                gameFieldData.setCellState(false, i, j);
+//                gameFieldData.setValueAt(gameFieldData.getValueAt(i, j), i, j);
             }
         }
         aliveCellsAmount = 0;
