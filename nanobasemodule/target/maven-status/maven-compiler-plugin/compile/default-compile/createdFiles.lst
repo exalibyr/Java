@@ -1,0 +1,9 @@
+userInterface\GUI.class
+userInterface\GUIBuilder.class
+userInterface\ResultTableModel.class
+userInterface\ResultTableColumnModel.class
+logic\DataManager.class
+userInterface\ResultTableRenderer.class
+userInterface\GUI$1.class
+logic\Main.class
+userInterface\VerticalLayout.class
