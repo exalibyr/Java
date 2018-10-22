@@ -1,9 +1,10 @@
 package logic;
 
-import userInterface.GUI;
+import userInterface.ValidationWindow;
+
 
 public class Main {
     public static void main(String[] args) {
-        new GUI();
+        new ValidationWindow();
     }
 }

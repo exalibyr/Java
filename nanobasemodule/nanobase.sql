@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Фев 18 2018 г., 20:06
+-- Время создания: Июн 28 2018 г., 20:55
 -- Версия сервера: 5.7.19
 -- Версия PHP: 5.6.31
 
@@ -22,6 +22,73 @@ SET time_zone = "+00:00";
 -- База данных: `nanobase`
 --
 
+DELIMITER $$
+--
+-- Процедуры
+--
+DROP PROCEDURE IF EXISTS `get_values`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_values` (IN `matrixName` TEXT CHARSET utf8, IN `questionName` TEXT CHARSET utf8)  BEGIN
+	SELECT nlf.FILL_NAME, nfa.ANSWER_TEXT, nla.ANSWER_NAME
+	FROM nano_l_questions nlq, nano_l_answers nla, nano_f_answers nfa, nano_f_datum nfd, nano_l_matrix nlm, nano_l_fill nlf
+	WHERE nlq.QUESTION_ID = nla.QUESTION_ID
+	AND nla.ANSWER_ID = nfa.ANSWER_ID
+    AND nla.QUESTION_ID = nfa.QUESTION_ID
+	AND nfa.DATA_ID = nfd.DATA_ID
+	AND nfd.MATRIX_ID = nlm.MATRIX_ID
+    AND nlf.FILL_ID = nfd.FILL_ID
+	AND nlm.MATRIX_NAME = matrixName
+    AND nlq.QUESTION_NAME = questionName;
+END$$
+
+DROP PROCEDURE IF EXISTS `update_questions`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_questions` (IN `matrixName` TEXT CHARSET utf8)  BEGIN 
+	SELECT DISTINCT nlq.QUESTION_NAME, nlq.QUESTION_NAME_ENG 
+	FROM nano_l_questions nlq, nano_l_answers nla, nano_f_answers nfa, nano_f_datum nfd, nano_l_matrix nlm
+	WHERE nlq.QUESTION_ID = nla.QUESTION_ID 
+    AND nla.QUESTION_ID = nfa.QUESTION_ID
+	AND nla.ANSWER_ID = nfa.ANSWER_ID
+	AND nfa.DATA_ID = nfd.DATA_ID
+	AND nfd.MATRIX_ID = nlm.MATRIX_ID
+	AND nlm.MATRIX_NAME = matrixName
+    AND nlq.QUESTION_GROUP_ID <> 4
+    AND nlq.QUESTION_GROUP_ID <> 3
+    AND nlq.QUESTION_GROUP_ID <> 15;
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Дублирующая структура для представления `application_area`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `application_area`;
+CREATE TABLE IF NOT EXISTS `application_area` (
+`КОМПОЗИТ` varchar(255)
+,`МАТРИЦА` varchar(255)
+,`НАПОЛНИТЕЛЬ` varchar(255)
+,`ОБЛАСТЬ ПРИМЕНЕНИЯ` text
+);
+
+-- --------------------------------------------------------
+
+--
+-- Дублирующая структура для представления `articles`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `articles`;
+CREATE TABLE IF NOT EXISTS `articles` (
+`КОМПОЗИТ` varchar(255)
+,`СТАТЬЯ` text
+,`ГОД ИЗДАНИЯ` int(5)
+,`ЖУРНАЛ` varchar(255)
+,`СТРАНИЦЫ` varchar(255)
+,`АВТОРЫ` text
+,`СТРАНА` varchar(255)
+,`ИСТОЧНИК` text
+);
+
 -- --------------------------------------------------------
 
 --
@@ -34,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `category_fill` (
   `parent_id` int(5) NOT NULL,
   `name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `category_fill`
@@ -53,7 +120,8 @@ INSERT INTO `category_fill` (`id`, `parent_id`, `name`) VALUES
 (10, 8, 'Неорганические'),
 (11, 9, 'Полимерные'),
 (12, 9, 'Углеродные наноструктуры'),
-(13, 10, 'Оксиды неМе');
+(13, 10, 'Оксиды неМе'),
+(14, 0, 'без наполнителя');
 
 -- --------------------------------------------------------
 
@@ -138,19 +206,12 @@ INSERT INTO `fill_class` (`uid`, `upc_name`, `upc_parent`) VALUES
 -- --------------------------------------------------------
 
 --
--- Дублирующая структура для представления `info_about_ceramic_composites`
+-- Дублирующая структура для представления `matrix_kinds`
 -- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `info_about_ceramic_composites`;
-CREATE TABLE IF NOT EXISTS `info_about_ceramic_composites` (
-`ARTICLE_NAME` text
-,`YEAR_ID` int(5)
-,`JOURNAL_NAME` varchar(255)
-,`AUTHORS` text
-,`COUNTRY_ID` int(3)
-,`MATRIX_NAME` varchar(255)
-,`FILL_NAME` varchar(255)
-,`full_name` text
+DROP VIEW IF EXISTS `matrix_kinds`;
+CREATE TABLE IF NOT EXISTS `matrix_kinds` (
+`MATRIX_NAME` varchar(255)
 );
 
 -- --------------------------------------------------------
@@ -5302,7 +5363,358 @@ INSERT INTO `nano_f_answers` (`QUESTION_ID`, `ANSWER_ID`, `ANSWER_LO_NUMBER`, `A
 (200, 1, NULL, 'Siemens D5000 diffractometer with the Cu K&#945; radiation (&#955;=0,15406 nm) from 1,5 to 30° by step of 0,04°', 413, NULL),
 (204, 1, NULL, ' the heating rate is decreased from 20 to 5 °C/min - 13°C', 413, NULL),
 (203, 1, NULL, '47.5°C', 413, NULL),
-(197, 1, NULL, 'Perkin–Elmer DSC-7 differential scanning calorimeter. The crystalline content of the injection moulded specimens was calculated from the crystallization and melting enthalpies measured from the areas of the correspondent peaks of the first heating scan and the melting enthalpy of 100% crystalline PTT (145 J/g)', 413, NULL);
+(197, 1, NULL, 'Perkin–Elmer DSC-7 differential scanning calorimeter. The crystalline content of the injection moulded specimens was calculated from the crystallization and melting enthalpies measured from the areas of the correspondent peaks of the first heating scan and the melting enthalpy of 100% crystalline PTT (145 J/g)', 413, NULL),
+(240, 23, NULL, '3.96', 414, NULL),
+(204, 24, NULL, '2050', 414, NULL),
+(53, 25, NULL, '30.14; 12.4; 6.4;', 414, NULL),
+(87, 26, NULL, '30000000000; 0.0009;', 414, NULL),
+(241, 27, NULL, '8', 414, NULL),
+(71, 28, NULL, '374; 315; 147;', 414, NULL),
+(242, 29, NULL, '650; 50', 414, NULL),
+(243, 30, NULL, '26', 414, NULL),
+(245, 1, NULL, '95-99.5', 423, NULL),
+(240, 23, NULL, '3.96', 415, NULL),
+(63, 30, NULL, '0.02', 415, NULL),
+(242, 31, NULL, '280', 415, NULL),
+(85, 34, NULL, '10.3', 415, NULL),
+(86, 9, NULL, '1', 415, NULL),
+(87, 36, NULL, '100000000000000', 415, NULL),
+(241, 3, NULL, '8', 423, NULL),
+(240, 23, NULL, '3.88', 416, NULL),
+(63, 30, NULL, '0.02', 416, NULL),
+(242, 31, NULL, '320', 416, NULL),
+(244, 1, NULL, '5', 416, NULL),
+(71, 32, NULL, '3.9', 416, NULL),
+(53, 3, NULL, '42', 416, NULL),
+(85, 34, NULL, '10.5', 416, NULL),
+(86, 8, NULL, '2', 415, NULL),
+(87, 36, NULL, '100000000000000', 416, NULL),
+(88, 7, NULL, '42', 416, NULL),
+(241, 37, NULL, '7.9', 416, NULL),
+(86, 9, NULL, '1', 416, NULL),
+(86, 8, NULL, '2', 416, NULL),
+(85, 35, NULL, '10.1', 416, NULL),
+(240, 23, NULL, '3.65', 417, NULL),
+(63, 30, NULL, '0.02', 417, NULL),
+(242, 31, NULL, '320', 417, NULL),
+(85, 34, NULL, '10.3', 417, NULL),
+(85, 35, NULL, '10.3', 417, NULL),
+(86, 8, NULL, '6', 417, NULL),
+(86, 9, NULL, '15', 417, NULL),
+(87, 36, NULL, '10000000000000', 417, NULL),
+(240, 23, NULL, '3.88', 418, NULL),
+(63, 30, NULL, '0.02', 418, NULL),
+(242, 31, NULL, '300', 418, NULL),
+(85, 34, NULL, '10.8', 418, NULL),
+(85, 35, NULL, '10.3', 418, NULL),
+(86, 8, NULL, '2', 418, NULL),
+(86, 9, NULL, '1', 418, NULL),
+(87, 36, NULL, '100000000000000', 418, NULL),
+(241, 37, NULL, '8.2', 418, NULL),
+(240, 23, NULL, '3.6', 419, NULL),
+(63, 30, NULL, '0.02', 419, NULL),
+(242, 31, NULL, '300', 419, NULL),
+(85, 34, NULL, '9.5', 419, NULL),
+(85, 35, NULL, '8.6', 419, NULL),
+(86, 8, NULL, '6', 419, NULL),
+(86, 9, NULL, '9', 419, NULL),
+(87, 36, NULL, '10000000000000', 419, NULL),
+(241, 37, NULL, '7.4', 419, NULL),
+(240, 23, NULL, '3.67', 420, NULL),
+(63, 30, NULL, '0.02', 420, NULL),
+(242, 31, NULL, '310', 420, NULL),
+(85, 34, NULL, '10', 420, NULL),
+(85, 35, NULL, '10.2', 420, NULL),
+(86, 8, NULL, '5', 420, NULL),
+(86, 9, NULL, '10', 420, NULL),
+(87, 36, NULL, '10000000000000', 420, NULL),
+(241, 37, NULL, '7.9', 420, NULL),
+(240, 23, NULL, '3.8', 421, NULL),
+(63, 30, NULL, '0.02', 421, NULL),
+(242, 31, NULL, '300', 421, NULL),
+(85, 34, NULL, '9', 421, NULL),
+(86, 8, NULL, '5', 421, NULL),
+(87, 36, NULL, '100000000000000', 421, NULL),
+(240, 23, NULL, '3.9', 422, NULL),
+(63, 30, NULL, '0.02', 422, NULL),
+(242, 31, NULL, '300', 422, NULL),
+(85, 34, NULL, '9.5', 422, NULL),
+(86, 8, NULL, '2', 422, NULL),
+(87, 36, NULL, '100000000000000', 422, NULL),
+(245, 1, NULL, '95-99.5', 418, NULL),
+(245, 1, NULL, '95-99.5', 419, NULL),
+(245, 1, NULL, '95-99.5', 420, NULL),
+(245, 1, NULL, '95-99.5', 421, NULL),
+(245, 1, NULL, '95-99.5', 422, NULL),
+(71, 32, NULL, '3.5', 415, NULL),
+(123, 3, NULL, '0.1-0.2', 415, NULL),
+(245, 1, NULL, '95-99.5', 424, NULL),
+(245, 1, NULL, '95-99.5', 425, NULL),
+(241, 1, NULL, '6', 424, NULL),
+(241, 2, NULL, '7', 424, NULL),
+(241, 3, NULL, '8', 424, NULL),
+(241, 1, NULL, '6', 425, NULL),
+(241, 2, NULL, '7', 425, NULL),
+(241, 37, NULL, '7.9', 425, NULL),
+(241, 1, NULL, '6.3', 418, NULL),
+(241, 2, NULL, '7.5', 418, NULL),
+(241, 1, NULL, '5.7', 419, NULL),
+(241, 2, NULL, '6.5', 419, NULL),
+(241, 1, NULL, '5.8', 420, NULL),
+(241, 2, NULL, '6.7', 420, NULL),
+(241, 2, NULL, '5.5', 421, NULL),
+(241, 2, NULL, '6.5', 422, NULL),
+(25, 8, NULL, 'теплопроводящие изоляторы нагревателей активных термостатов', 416, NULL),
+(25, 7, NULL, 'системы охлаждения термоэлектрических преобразователей на основе элементов Пельтье', 416, NULL),
+(25, 6, NULL, 'монолитные интегральные схемы усилителей большой мощности', 416, NULL),
+(25, 5, NULL, 'выходные устройства мощных СВЧ-приборов', 416, NULL),
+(25, 4, NULL, 'авиационно-космическая	и ракетная техника', 416, NULL),
+(25, 9, NULL, 'сборки линеек лазерных диодов', 416, NULL),
+(25, 4, NULL, 'авиационно-космическая	и ракетная техника', 417, NULL),
+(25, 5, NULL, 'выходные устройства мощных СВЧ-приборов', 417, NULL),
+(25, 6, NULL, 'монолитные интегральные схемы усилителей большой мощности', 417, NULL),
+(25, 7, NULL, 'системы охлаждения термоэлектрических преобразователей на основе элементов Пельтье', 417, NULL),
+(25, 8, NULL, 'теплопроводящие изоляторы нагревателей активных термостатов', 417, NULL),
+(25, 9, NULL, 'сборки линеек лазерных диодов', 417, NULL),
+(25, 4, NULL, 'электротехника', 421, NULL),
+(25, 4, NULL, 'электротехника', 422, NULL),
+(246, 1, NULL, '16', 426, NULL),
+(247, 1, NULL, '0.1', 426, NULL),
+(248, 1, NULL, '0.3', 426, NULL),
+(242, 31, NULL, '811', 426, NULL),
+(249, 1, NULL, '13.3', 426, NULL),
+(250, 1, NULL, '831', 426, NULL),
+(251, 1, NULL, '246', 426, NULL),
+(71, 7, NULL, '14.3', 426, NULL),
+(252, 1, NULL, '5', 426, NULL),
+(240, 23, NULL, '5.48', 426, NULL),
+(253, 1, NULL, '0.6', 426, NULL),
+(254, 1, NULL, '0.68', 426, NULL),
+(253, 1, NULL, '0.36', 427, NULL),
+(240, 23, NULL, '5.02', 427, NULL),
+(252, 1, NULL, '5.2', 427, NULL),
+(71, 7, NULL, '15.1', 427, NULL),
+(251, 1, NULL, '285', 427, NULL),
+(250, 1, NULL, '977', 427, NULL),
+(249, 1, NULL, '7.3', 427, NULL),
+(242, 31, NULL, '912', 427, NULL),
+(248, 1, NULL, '0.3', 427, NULL),
+(247, 1, NULL, '0.3', 427, NULL),
+(246, 1, NULL, '15', 427, NULL),
+(254, 1, NULL, '0.29', 427, NULL),
+(246, 1, NULL, '12', 428, NULL),
+(247, 1, NULL, '0.3', 428, NULL),
+(248, 1, NULL, '0.3', 428, NULL),
+(242, 31, NULL, '834', 428, NULL),
+(249, 1, NULL, '11.4', 428, NULL),
+(250, 1, NULL, '874', 428, NULL),
+(251, 1, NULL, '316', 428, NULL),
+(71, 7, NULL, '16.4', 428, NULL),
+(252, 1, NULL, '3.6', 428, NULL),
+(240, 23, NULL, '4.6', 428, NULL),
+(253, 1, NULL, '0.37', 428, NULL),
+(254, 1, NULL, '0.25', 428, NULL),
+(246, 1, NULL, '10', 429, NULL),
+(247, 1, NULL, '0.1', 429, NULL),
+(248, 1, NULL, '0.3', 429, NULL),
+(242, 31, NULL, '717', 429, NULL),
+(249, 1, NULL, '7.7', 429, NULL),
+(250, 1, NULL, '763', 429, NULL),
+(251, 1, NULL, '348', 429, NULL),
+(71, 7, NULL, '17.8', 429, NULL),
+(252, 1, NULL, '4.1', 429, NULL),
+(240, 23, NULL, '4.27', 429, NULL),
+(253, 1, NULL, '0.6', 429, NULL),
+(254, 1, NULL, '0.25', 429, NULL),
+(246, 1, NULL, '10', 430, NULL),
+(247, 1, NULL, '0.2', 430, NULL),
+(248, 1, NULL, '0', 430, NULL),
+(242, 31, NULL, '436', 430, NULL),
+(249, 1, NULL, '9.7', 430, NULL),
+(250, 1, NULL, '460', 430, NULL),
+(251, 1, NULL, '356', 430, NULL),
+(71, 7, NULL, '18.3', 430, NULL),
+(252, 1, NULL, '4.2', 430, NULL),
+(240, 23, NULL, '3.95', 430, NULL),
+(253, 1, NULL, '3.4', 430, NULL),
+(254, 1, NULL, '0', 430, NULL),
+(246, 1, NULL, '7', 431, NULL),
+(247, 1, NULL, '0.2', 431, NULL),
+(248, 1, NULL, '0', 431, NULL),
+(242, 31, NULL, '766', 431, NULL),
+(249, 1, NULL, '11.7', 431, NULL),
+(250, 1, NULL, '810', 431, NULL),
+(251, 1, NULL, '205', 431, NULL),
+(71, 7, NULL, '13.3', 431, NULL),
+(252, 1, NULL, '4.3', 431, NULL),
+(240, 23, NULL, '6.05', 431, NULL),
+(253, 1, NULL, '0.74', 431, NULL),
+(254, 1, NULL, '0', 431, NULL),
+(22, 4, NULL, 'Литьё под давлением', 426, NULL),
+(159, 4, NULL, '1500-1600 °C', 426, NULL),
+(162, 4, NULL, 'Метод литья под давлением. Сушка и спекание на воздухе при температурах от 1500 до 1600 °C, в зависимости от композиции порошка.', 426, NULL),
+(22, 4, NULL, 'Литьё под давлением', 427, NULL),
+(159, 4, NULL, '1500-1600 °C', 427, NULL),
+(162, 4, NULL, 'Метод литья под давлением. Сушка и спекание на воздухе при температурах от 1500 до 1600 °C, в зависимости от композиции порошка.', 427, NULL),
+(22, 4, NULL, 'Литьё под давлением', 428, NULL),
+(159, 4, NULL, '1500-1600 °C', 428, NULL),
+(162, 4, NULL, 'Метод литья под давлением. Сушка и спекание на воздухе при температурах от 1500 до 1600 °C, в зависимости от композиции порошка.', 428, NULL),
+(22, 4, NULL, 'Литьё под давлением', 429, NULL),
+(159, 4, NULL, '1500-1600 °C', 429, NULL),
+(162, 4, NULL, 'Метод литья под давлением. Сушка и спекание на воздухе при температурах от 1500 до 1600 °C, в зависимости от композиции порошка.', 429, NULL),
+(242, 31, NULL, '350-450', 432, NULL),
+(255, 1, NULL, '200', 432, NULL),
+(240, 23, NULL, '3.12-3.17', 432, NULL),
+(71, 7, NULL, '390 - 420', 432, NULL),
+(251, 1, NULL, '23 - 28', 432, NULL),
+(256, 1, NULL, '3.0 - 4.0', 432, NULL),
+(53, 3, NULL, '90 - 130', 432, NULL),
+(241, 4, NULL, '4.0 - 4.5', 432, NULL);
+INSERT INTO `nano_f_answers` (`QUESTION_ID`, `ANSWER_ID`, `ANSWER_LO_NUMBER`, `ANSWER_TEXT`, `DATA_ID`, `ANSWER_HI_NUMBER`) VALUES
+(22, 4, NULL, 'Метод свободного спекания в твёрдой фазе', 432, NULL),
+(25, 4, NULL, 'осевые и радиальные подшипники скольжения', 432, NULL),
+(25, 5, NULL, 'торцевые уплотнения различных типов насосов для нефтегазодобывающей и химической промышленности', 432, NULL),
+(25, 6, NULL, 'производство запорной арматуры', 432, NULL),
+(25, 7, NULL, 'проихводство износостойкой технологической оснастке (сопла, фильеры и др)', 432, NULL),
+(25, 8, NULL, 'использование в изделиях, работающих в агрессивных жидкостях с pH от 0 до 14', 432, NULL),
+(240, 23, NULL, '3.21 - 3.25', 433, NULL),
+(255, 1, NULL, '10', 433, NULL),
+(242, 31, NULL, '500 - 550', 433, NULL),
+(71, 7, NULL, '400 - 430', 433, NULL),
+(251, 1, NULL, '22 - 25', 433, NULL),
+(256, 1, NULL, '4.0 - 5.0', 433, NULL),
+(53, 3, NULL, '70 - 90', 433, NULL),
+(241, 4, NULL, '5.0 - 5.5', 433, NULL),
+(240, 23, NULL, '2,80 - 2,85', 434, NULL),
+(71, 7, NULL, '450 - 480', 434, NULL),
+(242, 31, NULL, '350 - 450', 434, NULL),
+(251, 1, NULL, '38 - 40', 434, NULL),
+(240, 23, NULL, '4,85 - 4,89', 435, NULL),
+(71, 7, NULL, '470 - 500', 435, NULL),
+(242, 31, NULL, '500 - 600', 435, NULL),
+(251, 1, NULL, '22 - 24', 435, NULL),
+(22, 4, NULL, 'Метод свободного спекания в жидкой фазе', 433, NULL),
+(25, 4, NULL, 'осевые и радиальные подшипники скольжения', 433, NULL),
+(25, 5, NULL, 'торцевые уплотнения различных типов насосов для нефтегазодобывающей и химической промышленности', 433, NULL),
+(25, 6, NULL, 'производство запорной арматуры', 433, NULL),
+(25, 7, NULL, 'проихводство износостойкой технологической оснастке (сопла, фильеры и др)', 433, NULL),
+(25, 8, NULL, 'использование в изделиях, работающих в агрессивных жидкостях с pH от 0 до 14', 433, NULL),
+(240, 23, NULL, '3,05 - 3,11', 436, NULL),
+(255, 1, NULL, '70', 436, NULL),
+(242, 31, NULL, '330 - 450', 436, NULL),
+(71, 7, NULL, '380 - 410', 436, NULL),
+(257, 1, NULL, '25 - 30', 436, NULL),
+(256, 1, NULL, '3,50 - 4,50', 436, NULL),
+(53, 33, NULL, '140 - 180', 436, NULL),
+(241, 4, NULL, '3 - 4', 436, NULL),
+(240, 23, NULL, '3,00 - 3,04', 437, NULL),
+(255, 1, NULL, '70', 437, NULL),
+(242, 31, NULL, '240 - 320', 437, NULL),
+(71, 7, NULL, '360 - 400', 437, NULL),
+(257, 1, NULL, '25 - 30', 437, NULL),
+(256, 1, NULL, '3,00 - 4,00', 437, NULL),
+(53, 33, NULL, '100 - 120', 437, NULL),
+(241, 4, NULL, '3 - 4', 437, NULL),
+(22, 4, NULL, 'Метод реакционного спекания', 436, NULL),
+(25, 4, NULL, 'применяют в парах трения осевых и радиальных подшипников скольжения погружных центробежных и роторно-вихревых насосов и герметичных насосов', 436, NULL),
+(25, 5, NULL, 'применяют в торцевых уплотнениях насосов', 436, NULL),
+(25, 6, NULL, 'производство запорной арматуры', 436, NULL),
+(25, 7, NULL, 'применяют в разнообразных износостойких изделиях', 436, NULL),
+(22, 4, NULL, 'Метод реакционного спекания', 437, NULL),
+(25, 4, NULL, 'применяют в парах трения осевых и радиальных подшипников скольжения погружных центробежных и роторно-вихревых насосов и герметичных насосов', 437, NULL),
+(25, 5, NULL, 'применяют в торцевых уплотнениях насосов', 437, NULL),
+(25, 6, NULL, 'производство запорной арматуры', 437, NULL),
+(25, 7, NULL, 'применяют в разнообразных износостойких изделиях', 437, NULL),
+(25, 4, NULL, 'применяется для защиты от агрессивных воздействий абразивных сред', 435, NULL),
+(25, 5, NULL, 'применяется для защиты от химически активных сред', 435, NULL),
+(25, 6, NULL, 'применяется для защиты от ионизирующих излучений', 435, NULL),
+(25, 7, NULL, 'применяется для защиты от воздействия высоких температур', 435, NULL),
+(25, 8, NULL, 'применяется для защиты от ударных воздействий', 435, NULL),
+(25, 4, NULL, 'применяется для защиты от агрессивных воздействий абразивных сред', 438, NULL),
+(25, 5, NULL, 'применяется для защиты от химически активных сред', 438, NULL),
+(25, 6, NULL, 'применяется для защиты от ионизирующих излучений', 438, NULL),
+(25, 7, NULL, 'применяется для защиты от воздействия высоких температур', 438, NULL),
+(25, 8, NULL, 'применяется для защиты от ударных воздействий', 438, NULL),
+(25, 4, NULL, 'применяется для защиты от агрессивных воздействий абразивных сред', 439, NULL),
+(25, 5, NULL, 'применяется для защиты от химически активных сред', 439, NULL),
+(25, 6, NULL, 'применяется для защиты от ионизирующих излучений', 439, NULL),
+(25, 7, NULL, 'применяется для защиты от воздействия высоких температур', 439, NULL),
+(25, 8, NULL, 'применяется для защиты от ударных воздействий', 439, NULL),
+(25, 4, NULL, 'применяется для защиты от агрессивных воздействий абразивных сред', 440, NULL),
+(25, 5, NULL, 'применяется для защиты от химически активных сред', 440, NULL),
+(25, 6, NULL, 'применяется для защиты от ионизирующих излучений', 440, NULL),
+(25, 7, NULL, 'применяется для защиты от воздействия высоких температур', 440, NULL),
+(25, 8, NULL, 'применяется для защиты от ударных воздействий', 440, NULL),
+(25, 4, NULL, 'применяется для защиты от агрессивных воздействий абразивных сред', 434, NULL),
+(25, 5, NULL, 'применяется для защиты от химически активных сред', 434, NULL),
+(25, 6, NULL, 'применяется для защиты от ионизирующих излучений', 434, NULL),
+(25, 7, NULL, 'применяется для защиты от воздействия высоких температур', 434, NULL),
+(25, 8, NULL, 'применяется для защиты от ударных воздействий', 434, NULL),
+(258, 1, NULL, '0.5', 441, NULL),
+(240, 23, NULL, '2.51', 441, NULL),
+(253, 1, NULL, '5', 441, NULL),
+(242, 31, NULL, '440-520', 441, NULL),
+(71, 7, NULL, '441', 441, NULL),
+(40, 0, NULL, '188', 441, NULL),
+(259, 1, NULL, '0.17', 441, NULL),
+(256, 1, NULL, '3.3-3.9', 441, NULL),
+(258, 1, NULL, '2', 442, NULL),
+(240, 23, NULL, '2.44', 442, NULL),
+(253, 1, NULL, '8', 442, NULL),
+(242, 31, NULL, '311-391', 442, NULL),
+(71, 7, NULL, '390', 442, NULL),
+(40, 0, NULL, '166', 442, NULL),
+(259, 1, NULL, '0.17', 442, NULL),
+(256, 1, NULL, '3.1-3.5', 442, NULL),
+(258, 1, NULL, '2', 443, NULL),
+(240, 23, NULL, '2.46', 443, NULL),
+(253, 1, NULL, '7', 443, NULL),
+(242, 31, NULL, '323-383', 443, NULL),
+(71, 7, NULL, '372', 443, NULL),
+(40, 0, NULL, '158', 443, NULL),
+(259, 1, NULL, '0.17', 443, NULL),
+(256, 1, NULL, '3-3.4', 443, NULL),
+(22, 0, NULL, 'метод горячего прессования', 441, NULL),
+(22, 4, NULL, 'метод горячего прессования', 441, NULL),
+(22, 4, NULL, 'метод спекания', 442, NULL),
+(22, 4, NULL, 'метод спекания', 443, NULL),
+(162, 0, NULL, 'спекание без применения внешнего давления, с использованием различных добавок для увеличения диффузионного массопереноса', 442, NULL),
+(162, 4, NULL, 'спекание без применения внешнего давления, с использованием различных добавок для увеличения диффузионного массопереноса', 443, NULL),
+(162, 4, NULL, 'спекание без применения внешнего давления, с использованием различных добавок для увеличения диффузионного массопереноса', 442, NULL),
+(25, 4, NULL, 'производство бронежилетов', 441, NULL),
+(25, 4, NULL, 'производство бронежилетов', 442, NULL),
+(25, 4, NULL, 'производство бронежилетов', 443, NULL),
+(240, 23, NULL, '14.8', 444, NULL),
+(242, 31, NULL, '2800', 444, NULL),
+(71, 0, NULL, '590', 444, NULL),
+(260, 1, NULL, '91', 444, NULL),
+(244, 2, NULL, '35', 444, NULL),
+(53, 33, NULL, '50', 444, NULL),
+(241, 4, NULL, '5,1', 444, NULL),
+(261, 1, NULL, '0,01', 444, NULL),
+(262, 1, NULL, '4', 444, NULL),
+(240, 23, NULL, '14,7', 445, NULL),
+(242, 31, NULL, '2400', 445, NULL),
+(71, 7, NULL, '590', 445, NULL),
+(260, 1, NULL, '90', 445, NULL),
+(244, 2, NULL, '30', 445, NULL),
+(53, 33, NULL, '50', 445, NULL),
+(241, 4, NULL, '5,1', 445, NULL),
+(261, 1, NULL, '0,01', 445, NULL),
+(262, 1, NULL, '3', 445, NULL),
+(240, 23, NULL, '14,6', 446, NULL),
+(242, 31, NULL, '1670', 446, NULL),
+(71, 7, NULL, '600', 446, NULL),
+(260, 1, NULL, '87,5', 446, NULL),
+(244, 2, NULL, '30', 446, NULL),
+(53, 33, NULL, '50', 446, NULL),
+(241, 4, NULL, '5,1', 446, NULL),
+(22, 4, NULL, 'метод порошковой металлургии', 444, NULL),
+(22, 4, NULL, 'метод порошковой металлургии', 446, NULL),
+(22, 4, NULL, 'метод порошковой металлургии', 445, NULL),
+(25, 4, NULL, 'применение в качестве пар трения подшипников скольжения и торцовых уплотнений, деталей запорной арматуры, штампов, пресс-форм и др', 445, NULL),
+(25, 4, NULL, 'применение в качестве пар трения подшипников скольжения и торцовых уплотнений, деталей запорной арматуры, штампов, пресс-форм и др', 444, NULL),
+(25, 4, NULL, 'применение в качестве пар трения подшипников скольжения и торцовых уплотнений, деталей запорной арматуры, штампов, пресс-форм и др', 446, NULL);
 
 -- --------------------------------------------------------
 
@@ -5322,7 +5734,7 @@ CREATE TABLE IF NOT EXISTS `nano_f_datum` (
   KEY `MATRIX_ID` (`MATRIX_ID`),
   KEY `FILL_ID` (`FILL_ID`),
   KEY `ARTICLE_ID` (`ARTICLE_ID`)
-) ENGINE=MyISAM AUTO_INCREMENT=414 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=447 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_f_datum`
@@ -5726,7 +6138,40 @@ INSERT INTO `nano_f_datum` (`DATA_ID`, `ARTICLE_ID`, `COMPOSITE_ID`, `MATRIX_ID`
 (410, 351, 57, 68, 64),
 (411, 352, 58, 61, 62),
 (412, 353, 59, 194, 65),
-(413, 354, 50, 191, 50);
+(413, 354, 50, 191, 50),
+(414, 355, 60, 196, 66),
+(415, 356, 61, 196, 67),
+(416, 357, 62, 196, 67),
+(417, 357, 63, 196, 67),
+(418, 358, 64, 196, 67),
+(419, 358, 65, 196, 67),
+(420, 358, 66, 196, 67),
+(421, 358, 67, 196, 67),
+(422, 358, 68, 196, 67),
+(423, 358, 61, 196, 67),
+(424, 358, 62, 196, 67),
+(425, 358, 63, 196, 67),
+(426, 359, 69, 197, 69),
+(427, 359, 70, 197, 69),
+(428, 359, 71, 196, 68),
+(429, 359, 72, 196, 68),
+(430, 359, 73, 196, 68),
+(431, 359, 74, 197, 69),
+(432, 360, 75, 198, 70),
+(433, 360, 76, 198, 70),
+(434, 361, 77, 199, 70),
+(435, 361, 78, 200, 70),
+(436, 362, 79, 198, 27),
+(437, 362, 80, 198, 27),
+(438, 361, 79, 198, 27),
+(439, 361, 80, 198, 27),
+(440, 361, 75, 198, 70),
+(441, 363, 81, 199, 70),
+(442, 363, 82, 199, 72),
+(443, 363, 83, 199, 72),
+(444, 364, 84, 201, 73),
+(445, 364, 85, 201, 74),
+(446, 364, 86, 201, 73);
 
 -- --------------------------------------------------------
 
@@ -5787,7 +6232,7 @@ INSERT INTO `nano_l_answers` (`QUESTION_ID`, `ANSWER_ID`, `ANSWER_TYPE_ID`, `ANS
 (129, 1, 3, 'нм', NULL),
 (129, 2, 3, 'мкм', NULL),
 (130, 1, 3, 'не определено', NULL),
-(131, 1, 2, 'г/см3', 'g/cm3'),
+(131, 1, 2, 'г/см³', 'g/cm³'),
 (133, 1, 3, 'ГПа', 'GPa'),
 (133, 2, 3, '%, на сколько увеличился', NULL),
 (134, 1, 3, 'ГПа', 'GPa'),
@@ -6162,7 +6607,65 @@ INSERT INTO `nano_l_answers` (`QUESTION_ID`, `ANSWER_ID`, `ANSWER_TYPE_ID`, `ANS
 (187, 1, 3, 'Название', NULL),
 (187, 2, 2, 'масс %', NULL),
 (188, 1, 3, 'не определено', NULL),
-(189, 1, 2, 'м/с', NULL);
+(189, 1, 2, 'м/с', NULL),
+(240, 23, 2, 'г/см³', 'g/sm³'),
+(204, 24, 2, '°C', '°C'),
+(53, 25, 2, 'Вт/(K*м); при 100°C; при 400°C; при 1000°C', 'W/(K*m); at 100°C; at 400°C; at 1000°C'),
+(87, 26, 2, 'Ом*см; при 100°C; при 1300°C)', 'Ohm*cm; at 100°C; at 1300°C'),
+(241, 27, 2, 'α•10⁻⁶•K⁻¹, при 20-1400°C', 'α•10⁻⁶•K⁻¹, at 20-1400°C'),
+(71, 28, 2, 'ГПа; при 20°C; при 1000°C; при 1500°C', 'GPa; at 20°C; at 1000°C; 1500°C'),
+(242, 29, 2, 'МПА; 20°C; 1500°C', 'MPa; 20°C; 1500°C'),
+(243, 30, 2, 'ГПа (при 20°C)', 'GPa (at 20°C)'),
+(63, 30, 2, '%', '%'),
+(242, 31, 2, 'МПА', 'MPa'),
+(71, 32, 2, 'Е•10⁻², ГПа', 'Е•10⁻², GPa'),
+(53, 33, 2, 'Вт/(м•К)', 'W/(K•m)'),
+(85, 34, 2, 'при 25°C и частоте 10⁶ Гц', 'at 25°C and frequency 10⁶ Hz'),
+(86, 8, 2, 'tgδ•10⁴, при 25°C и частоте 10⁶ Гц', 'tgδ•10⁴, at 25°C and frecuency 10⁶ Hz'),
+(87, 36, 2, ', Ом•см, при 100°С', 'Ohm•cm, at 100°С'),
+(241, 37, 2, 'α•10⁻⁶•K⁻¹, при 20-900°C', 'α•10⁻⁶•K⁻¹, at 20-900°C'),
+(244, 1, 2, 'кПа•м²', 'kPa•m²'),
+(53, 3, 2, 'Вт/(К•м)', 'W/(K•m)'),
+(88, 7, 2, 'кВ/мм', 'kV/mm'),
+(86, 9, 2, 'tgδ•10⁴, при 25°C и частоте 10¹⁰ Гц', 'tgδ•10⁴, at 25°C and frecuency 10¹⁰ Hz'),
+(85, 35, 2, 'при 25°C и частоте 10¹⁰ Гц', 'at 25°C and frequency 10¹⁰ Hz'),
+(245, 1, 6, '%', '%'),
+(123, 3, 6, '%', '%'),
+(241, 1, 2, 'α•10⁻⁶•K⁻¹, при 20-200°C ', 'α•10⁻⁶•K⁻¹ at 20-200°C, K⁻¹'),
+(241, 2, 2, 'α•10⁻⁶•K⁻¹, при 20-500°C', 'α•10⁻⁶•K⁻¹, at 20-500°C'),
+(241, 3, 2, 'α•10⁻⁶•K⁻¹, при 20-1000°C', 'α•10⁻⁶•K⁻¹, at 20-1000°C'),
+(25, 4, 3, 'название', 'name'),
+(25, 5, 3, 'название', 'name'),
+(25, 6, 3, 'название', 'name'),
+(25, 7, 3, 'название', 'name'),
+(25, 8, 3, 'название', 'name'),
+(25, 9, 3, 'название', 'name'),
+(246, 1, 2, 'м^2/г', 'm^2/g'),
+(247, 1, 2, 'мкм', 'μm'),
+(248, 1, 2, 'мкм', 'μm'),
+(249, 1, 2, 'нет единиц измерения', 'without measure'),
+(250, 1, 2, 'МПа', 'MPa'),
+(251, 1, 2, 'ГПа', 'GPa'),
+(71, 7, 10, 'ГПа', 'GPa'),
+(252, 1, 2, 'МПа*м^(1/2)', 'MPa*m^(1/2)'),
+(253, 1, 2, 'мкм', 'μm'),
+(254, 1, 2, 'мкм', 'μm'),
+(22, 4, 3, 'Название метода', 'Method name'),
+(159, 4, 3, 'Диапазон температур', 'Temperature range'),
+(162, 4, 3, 'Краткое описание', 'Short description'),
+(255, 1, 2, 'мкм', 'μm'),
+(256, 1, 2, 'МПа•м½', 'MPa•m½'),
+(241, 4, 2, 'α•10⁻⁶•K⁻¹', 'α•10⁻⁶•K⁻¹,'),
+(257, 1, 6, 'ГПа', 'GPa'),
+(25, 10, 3, 'название', 'name'),
+(25, 11, 3, 'название', 'name'),
+(25, 12, 3, 'название', 'name'),
+(258, 1, 2, '%', '%'),
+(259, 1, 2, 'без размерности', 'without measure'),
+(260, 1, 2, 'ГПа', 'GPa'),
+(244, 2, 2, 'кДж/м²', 'kJ/m²'),
+(261, 1, 2, 'без размерности', 'without measure'),
+(262, 1, 2, 'без размерности', 'without measure');
 
 -- --------------------------------------------------------
 
@@ -6187,7 +6690,8 @@ INSERT INTO `nano_l_answers_types` (`ANSWER_TYPE_ID`, `ANSWER_TYPE_NAME`) VALUES
 (2, 'NUMBER'),
 (3, 'TEXT'),
 (4, 'UNIQUE_NUMBER'),
-(5, 'UNIQUE_TEXT');
+(5, 'UNIQUE_TEXT'),
+(6, 'INTERVAL');
 
 -- --------------------------------------------------------
 
@@ -6211,7 +6715,7 @@ CREATE TABLE IF NOT EXISTS `nano_l_articles` (
   `FILE` text NOT NULL,
   PRIMARY KEY (`ARTICLE_ID`),
   KEY `COUNTRY_ID` (`COUNTRY_ID`)
-) ENGINE=MyISAM AUTO_INCREMENT=355 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=365 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_l_articles`
@@ -6557,7 +7061,17 @@ INSERT INTO `nano_l_articles` (`ARTICLE_ID`, `ARTICLE_NAME`, `YEAR_ID`, `JOURNAL
 (351, 'Electrochemical studies of poly (3,4-ethylenedioxythiophene) PEDOT/VS2 nanocomposite as a cathode material for rechargeable lithium batteries', 2005, 'Electrochemistry Communications', NULL, 0, '213-218', '7', 2, 'A.Vadivel Murugan Chinnakonda S. Gopinath and K. Vijayamohanan', 4, '57.pdf'),
 (352, 'Chloroform vapour sensor based on copper/polyaniline nanocomposite', 2002, 'Sensors and Actuators B: Chemical', NULL, 0, '131-136', '85', 0, 'Satish , Chetan , Sushama and Anjali A. ,', 4, '58.pdf'),
 (353, 'Synthesis and characterization of NiO–Ta2O5 nanocompositeelectrode for electrochromic devices', 2005, 'Electrochemistry Communications', NULL, 0, '567-571', '7', 6, 'Hyo-Jin Ahn, Hee-Sang Shim, Youn-Su Kim, Chan-Young Kim and Tae-Yeon Seong', 4, '59.pdf'),
-(354, 'Structure and properties of nanocomposites with a poly(trimethylene terephthalate) matrix', 2008, 'European Polymer Journal', NULL, 0, '1686-1695', '44', 6, 'U. Gurmendia, J.I. Eguiazabala and J. Nazabal,', 4, '60.pdf');
+(354, 'Structure and properties of nanocomposites with a poly(trimethylene terephthalate) matrix', 2008, 'European Polymer Journal', NULL, 0, '1686-1695', '44', 6, 'U. Gurmendia, J.I. Eguiazabala and J. Nazabal,', 4, '60.pdf'),
+(355, '4.2.1. Керамика на основе Al2O3', 2004, 'Техническая керамика. Учебное пособие ТПУ Томск.', NULL, 1, '30-36', '6', NULL, 'С.В.Матренин, А.И.Слосман', 7, 'mechanical_engineering.pdf'),
+(356, 'Разработка бесспековой технологии вакуумплотной корундовой керамики группы вк100 для нужд электронной техники', 2016, 'Разработка бесспековой технологии вакуумплотной корундовой керамики группы вк100 для нужд электронной техники: дисс., Москва', NULL, 1, '', '', NULL, 'Амелина О.Д.', 7, ''),
+(357, 'Вакуум-плотная корундовая керамика на основе ультрадисперсных порошков', 2010, 'НАНОИНДУСТРИЯ', NULL, 1, '40-41', '2', 5, 'Амелина O.Д., Нестеров C.', 7, 'article_1812_291.pdf'),
+(358, 'Материал, вакуумная керамика', 2006, '«Вакуумная керамика» [Электронный ресурс], режим доступа: http://www.vaccer.ru/material', NULL, 1, '1', '1', NULL, 'OOO «Вакуумная керамика»', 7, 'http://www.vaccer.ru/material'),
+(359, 'Fracture toughness of alumina–zirconia composites', 2006, 'Ceramics International', NULL, 29, '249-255', '7', 32, 'Cesari F., Esposito L., Furgiuele F.M., MAletta C., Tucci A.', 7, 'cesari2006.pdf'),
+(360, 'Карбиды кремния спеченный в твердой фазе и жидкофазноспеченный карбид кремния', 2013, 'ВИРИАЛ [Электронный ресурс], режим доступа: http://www.virial.ru/materials/91/', NULL, 1, '1', '1', NULL, 'ООО «Вириал»', 7, 'http://www.virial.ru/materials/91/'),
+(361, 'Износостойкая керамика', 2013, 'ВИРИАЛ [Электронный ресурс], режим доступа: http://www.virial.ru/materials/arm_ceramic/		', NULL, 1, '1', '1', NULL, 'ООО «Вириал»', 7, 'http://www.virial.ru/materials/arm_ceramic/'),
+(362, 'Карбид кремния реакционноспеченный', 2013, 'ВИРИАЛ [Электронный ресурс], режим доступа: http://www.virial.ru/materials/473/', NULL, 1, '1', '1', NULL, 'ООО «Вириал»', 7, 'http://www.virial.ru/materials/473/'),
+(363, 'Boron Carbide—A Comprehensive Review', 1990, 'Journal of the European Ceramic Society ', 4, 4, '205-225', '20', 6, 'F. Thevenot', 7, 'thvenot1990'),
+(364, 'Вольфрамсодержащие твёрдые сплавы', 2013, 'ВИРИАЛ [Электронный ресурс], режим доступа: http://www.virial.ru/materials/92/', NULL, 1, '1', '1', NULL, 'ООО «Вириал»', 7, 'http://www.virial.ru/materials/92/');
 
 -- --------------------------------------------------------
 
@@ -6570,73 +7084,102 @@ CREATE TABLE IF NOT EXISTS `nano_l_composite` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `full_name` text NOT NULL,
+  `matrix_fraction` text,
+  `fill_fraction` text,
   PRIMARY KEY (`id`),
   UNIQUE KEY `un_name` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=60 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=87 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_l_composite`
 --
 
-INSERT INTO `nano_l_composite` (`id`, `name`, `full_name`) VALUES
-(1, 'poly(vinyl alcohol)–clay', ''),
-(2, 'PBSA', 'poly[(butylene succinate)-co-adipate]'),
-(3, 'PVdF/LiClO4/TiO2', 'polymer - poly(vinylidene fluoride) (PVdF), lithium perchlorate (LiClO4) and TiO2 nanoparticles'),
-(5, 'TiAlSiN coatin', ''),
-(6, 'LDPE/Mg–Al LDH', 'LDPE/Mg–Al layered double hydroxide'),
-(7, 'St–BA/GO', 'Styrene–butyl acrylate copolymer /graphite oxide '),
-(8, 'PANI/Clino', 'Polyaniline / Clinoptilolite '),
-(9, 'SnO2–In2O3', 'gas-sensing nanocomposites of SnO2–In2O3 '),
-(10, 'PGO', 'Polystyrene intercalated graphite oxide'),
-(11, 'Si/SiO', ''),
-(12, 'Ag@TiO2', 'Ag@TiO2 core–shell nanocomposite nanowires'),
-(13, 'SnO2–hexaniobate layered', ''),
-(14, 'EO/LDH', 'The oligo(ethylene oxide) modified layered double hydroxide (LDH)'),
-(15, 'PEO/Laponite', 'poly(ethylene oxide)/Laponite'),
-(16, 'PU/OMMT', 'polyurethane/organically modified montmorillonite (OMMT) clay'),
-(17, 'PAS–POSS', 'poly(acetoxystyrenezhi-co-octavinyl-polyhedral oligomeric silsesquioxane)'),
-(18, 'CaF2', 'calcium fluoride based dental nanocomposite'),
-(19, 'TiCrN', 'titanium chromium nitride nanocrystalline'),
-(20, 'PLA', 'Poly(l-lactic acid)–TiO2 nanoparticle nanocomposite'),
-(21, 'SiCN', 'Silicon carbide nitride'),
-(22, 'HMNC', 'Hydrogel magnetite nanocomposite'),
-(23, 'LDHs  MnO2-pillared Ni2+–Fe3+', 'MnO2-pillared Ni2+–Fe3+ layered double hydroxides nanocomposite'),
-(24, 'PSBA-silica', 'poly(styrene-butylacrylate-acrylic acid)–silica'),
-(25, 'PA/S', 'Polyacrylate/silica'),
-(26, 'ZnS/hyperbranched polyester', ''),
-(27, 'Microfibrils polyoxyethylene', ''),
-(31, 'Nylon 1212/montmorillonite', 'Nylon 1212/montmorillonite'),
-(28, 'PS VB16', 'polystyrene N,N-dimethyl-n-hexadecyl-(4-vinylbenzyl) ammonium chloride'),
-(29, 'PEA/MMT', 'poly(o-ethoxyaniline)  and layered montmorillonite  clay'),
-(30, 'MXD6/MLS', 'montmorillonite layered silicate (MLS)/poly(m-xylylene adipimide) (MXD6)'),
-(32, 'PEVA/clay', 'Poly(ethylene-co-vinyl acetate)/clay'),
-(33, 'PLA/MMT', 'poly(lactic acid) /montmorillonite'),
-(34, 'silica/PHBHx', ' silica/poly(3-hydroxybutyrate-co-3-hydroxyhexanoate) '),
-(35, 'PET/', 'Poly(ethylene terephthalate) /silica'),
-(36, 'CaCO3/PMMA', ''),
-(37, 'PA6-BOE', 'polyamide-6-boehmite'),
-(38, 'Ag2S/PHB', 'poly(3-hydroxybutyrate) (PHB) and silver sulfide/poly(3-hydroxybutyrate)'),
-(39, 'HDPE/PEMA', 'high density polyethylene / polyethylene maleic anhydride'),
-(40, 'PP/Si', 'polypropylene/silicon'),
-(41, 'MWNTs/epoxy', 'multiwalled carbon nanotubes /epoxy'),
-(42, 'PU/MMT', 'Polyurethane (PU)/montmorillonite (MMT)'),
-(43, 'sPB/organoclay', 'Syndiotactic 1,2-polybutadiene/organoclay'),
-(44, 'SWCNT/polyLF', 'single wall carbon nanotubes/Poly (l-Leucine-ran-l-Phenylalanine)'),
-(45, 'HDPE/HDPE-g-MA and M2(HT)2 organoclay', 'high density polyethylene  and maleic anhydride-grafted high density polyethylene  '),
-(46, 'PHBV/OMMT', 'Poly(3-hydroxybutyrate-co-3-hydroxyvalerate)/organophilic montmorillonite'),
-(47, 'PMMA/SiO2–CaO', 'poly(methyl methacrylate)/SiO2–CaO'),
-(48, 'PMMA/Na+-MMT clay', 'Methyl methacrylate/ Na+-montmorillonite clay'),
-(49, 'PE/Mg–Al LDH', 'polyethylene/Mg–Al layered double hydroxide'),
-(50, 'PTT/MMT clay', 'Poly(trimethylene terephthalate)/ montmorillonites clay'),
-(51, 'PLLA/MMT', 'poly( -lactic acid)/montmorillonite'),
-(52, 'PHB/multiphase systems', 'poly(3-hydroxybutyrate)/multiphase systems'),
-(53, 'Cu/Zn', ''),
-(54, 'PVA–clay', 'PVA–clay nanocomposite hydrogel'),
-(55, 'PA6/OMT', 'polyamide 6/organocla'),
-(56, 'Au/CdS', ''),
-(57, 'PEDOT/VS2', ''),
-(58, 'Cu/PANi', 'copper/polyaniline'),
-(59, 'NiO–Ta2O5 ', '');
+INSERT INTO `nano_l_composite` (`id`, `name`, `full_name`, `matrix_fraction`, `fill_fraction`) VALUES
+(1, 'poly(vinyl alcohol)–clay', '', NULL, NULL),
+(2, 'PBSA', 'poly[(butylene succinate)-co-adipate]', NULL, NULL),
+(3, 'PVdF/LiClO4/TiO2', 'polymer - poly(vinylidene fluoride) (PVdF), lithium perchlorate (LiClO4) and TiO2 nanoparticles', NULL, NULL),
+(5, 'TiAlSiN coatin', '', NULL, NULL),
+(6, 'LDPE/Mg–Al LDH', 'LDPE/Mg–Al layered double hydroxide', NULL, NULL),
+(7, 'St–BA/GO', 'Styrene–butyl acrylate copolymer /graphite oxide ', NULL, NULL),
+(8, 'PANI/Clino', 'Polyaniline / Clinoptilolite ', NULL, NULL),
+(9, 'SnO2–In2O3', 'gas-sensing nanocomposites of SnO2–In2O3 ', NULL, NULL),
+(10, 'PGO', 'Polystyrene intercalated graphite oxide', NULL, NULL),
+(11, 'Si/SiO', '', NULL, NULL),
+(12, 'Ag@TiO2', 'Ag@TiO2 core–shell nanocomposite nanowires', NULL, NULL),
+(13, 'SnO2–hexaniobate layered', '', NULL, NULL),
+(14, 'EO/LDH', 'The oligo(ethylene oxide) modified layered double hydroxide (LDH)', NULL, NULL),
+(15, 'PEO/Laponite', 'poly(ethylene oxide)/Laponite', NULL, NULL),
+(16, 'PU/OMMT', 'polyurethane/organically modified montmorillonite (OMMT) clay', NULL, NULL),
+(17, 'PAS–POSS', 'poly(acetoxystyrenezhi-co-octavinyl-polyhedral oligomeric silsesquioxane)', NULL, NULL),
+(18, 'CaF2', 'calcium fluoride based dental nanocomposite', NULL, NULL),
+(19, 'TiCrN', 'titanium chromium nitride nanocrystalline', NULL, NULL),
+(20, 'PLA', 'Poly(l-lactic acid)–TiO2 nanoparticle nanocomposite', NULL, NULL),
+(21, 'SiCN', 'Silicon carbide nitride', NULL, NULL),
+(22, 'HMNC', 'Hydrogel magnetite nanocomposite', NULL, NULL),
+(23, 'LDHs  MnO2-pillared Ni2+–Fe3+', 'MnO2-pillared Ni2+–Fe3+ layered double hydroxides nanocomposite', NULL, NULL),
+(24, 'PSBA-silica', 'poly(styrene-butylacrylate-acrylic acid)–silica', NULL, NULL),
+(25, 'PA/S', 'Polyacrylate/silica', NULL, NULL),
+(26, 'ZnS/hyperbranched polyester', '', NULL, NULL),
+(27, 'Microfibrils polyoxyethylene', '', NULL, NULL),
+(31, 'Nylon 1212/montmorillonite', 'Nylon 1212/montmorillonite', NULL, NULL),
+(28, 'PS VB16', 'polystyrene N,N-dimethyl-n-hexadecyl-(4-vinylbenzyl) ammonium chloride', NULL, NULL),
+(29, 'PEA/MMT', 'poly(o-ethoxyaniline)  and layered montmorillonite  clay', NULL, NULL),
+(30, 'MXD6/MLS', 'montmorillonite layered silicate (MLS)/poly(m-xylylene adipimide) (MXD6)', NULL, NULL),
+(32, 'PEVA/clay', 'Poly(ethylene-co-vinyl acetate)/clay', NULL, NULL),
+(33, 'PLA/MMT', 'poly(lactic acid) /montmorillonite', NULL, NULL),
+(34, 'silica/PHBHx', ' silica/poly(3-hydroxybutyrate-co-3-hydroxyhexanoate) ', NULL, NULL),
+(35, 'PET/', 'Poly(ethylene terephthalate) /silica', NULL, NULL),
+(36, 'CaCO3/PMMA', '', NULL, NULL),
+(37, 'PA6-BOE', 'polyamide-6-boehmite', NULL, NULL),
+(38, 'Ag2S/PHB', 'poly(3-hydroxybutyrate) (PHB) and silver sulfide/poly(3-hydroxybutyrate)', NULL, NULL),
+(39, 'HDPE/PEMA', 'high density polyethylene / polyethylene maleic anhydride', NULL, NULL),
+(40, 'PP/Si', 'polypropylene/silicon', NULL, NULL),
+(41, 'MWNTs/epoxy', 'multiwalled carbon nanotubes /epoxy', NULL, NULL),
+(42, 'PU/MMT', 'Polyurethane (PU)/montmorillonite (MMT)', NULL, NULL),
+(43, 'sPB/organoclay', 'Syndiotactic 1,2-polybutadiene/organoclay', NULL, NULL),
+(44, 'SWCNT/polyLF', 'single wall carbon nanotubes/Poly (l-Leucine-ran-l-Phenylalanine)', NULL, NULL),
+(45, 'HDPE/HDPE-g-MA and M2(HT)2 organoclay', 'high density polyethylene  and maleic anhydride-grafted high density polyethylene  ', NULL, NULL),
+(46, 'PHBV/OMMT', 'Poly(3-hydroxybutyrate-co-3-hydroxyvalerate)/organophilic montmorillonite', NULL, NULL),
+(47, 'PMMA/SiO2–CaO', 'poly(methyl methacrylate)/SiO2–CaO', NULL, NULL),
+(48, 'PMMA/Na+-MMT clay', 'Methyl methacrylate/ Na+-montmorillonite clay', NULL, NULL),
+(49, 'PE/Mg–Al LDH', 'polyethylene/Mg–Al layered double hydroxide', NULL, NULL),
+(50, 'PTT/MMT clay', 'Poly(trimethylene terephthalate)/ montmorillonites clay', NULL, NULL),
+(51, 'PLLA/MMT', 'poly( -lactic acid)/montmorillonite', NULL, NULL),
+(52, 'PHB/multiphase systems', 'poly(3-hydroxybutyrate)/multiphase systems', NULL, NULL),
+(53, 'Cu/Zn', '', NULL, NULL),
+(54, 'PVA–clay', 'PVA–clay nanocomposite hydrogel', NULL, NULL),
+(55, 'PA6/OMT', 'polyamide 6/organocla', NULL, NULL),
+(56, 'Au/CdS', '', NULL, NULL),
+(57, 'PEDOT/VS2', '', NULL, NULL),
+(58, 'Cu/PANi', 'copper/polyaniline', NULL, NULL),
+(59, 'NiO–Ta2O5 ', '', NULL, NULL),
+(60, 'Al₂O₃-TiO₂', 'спечённая корундовая керамика', NULL, NULL),
+(61, 'ВК 100-1', 'поликор', NULL, NULL),
+(62, 'ВК 100-2', 'КМ', NULL, NULL),
+(63, 'ВК 94-1', '22ХС', NULL, NULL),
+(64, 'ВК 98-1', 'сапфирит-16', NULL, NULL),
+(65, 'ВК 94-2', 'М-7', NULL, NULL),
+(66, 'ВК 95-1', 'ВГ-1У', NULL, NULL),
+(67, 'ГР.795', 'ГБ-7', NULL, NULL),
+(68, 'ГР.799', 'МК', NULL, NULL),
+(69, 'TZ3Y20A', '8Z2A', '80', '20'),
+(70, 'TZ3Y40A', '6Z4A', '60', '40'),
+(71, 'TZ3Y60A', '4Z6A', '60', '40'),
+(72, 'TZ3Y80A', '2Z8A', '80', '20'),
+(73, 'SM8', 'Baikowski, F', '100', '0'),
+(74, 'TZ3YS', 'TZ3YS—Tosoh Co., J, 3 mol% Y2O3', '100', '0'),
+(75, 'S-P SiC', 'Solid-Phase sintered silicon carbide', '', ''),
+(76, 'L-P SiC', 'liquid-phase sintered silicon carbide', '', ''),
+(77, 'Based on B₄C', 'Ceramic composite based on boron carbide', '', ''),
+(78, 'Based on TiB₂', 'Ceramic composite based on titanium diboride', '', ''),
+(79, 'R SiC (15%Si)', 'reactive-sintered silicon carbide', '85', '15'),
+(80, 'R SiC (21%Si)', 'reactive-sintered silicon carbide (for large-sized products)', '79', '21'),
+(81, 'H-P B₄C ', 'boron carbide hot-pressed', '', ''),
+(82, 'S B₄C (1%мас. C)', 'Спечённый карбид бора (1% мас. свободного углерода)', '99', '1'),
+(83, 'S B₄C (3%мас. C)', 'Спечённый карбид бора (3% мас. свободного углерода)', '97', '3'),
+(84, 'ВК8', 'вольфрам-кобальт 8%масс.', '92', '8'),
+(85, 'CBH8', 'смесь вольфрама и никеля 8%масс.', '92', '8'),
+(86, 'ВК8 (ГОСТ-3882)', 'вольфрам-кобальт 8%масс. (ГОСТ-3882)', '92', '8');
 
 -- --------------------------------------------------------
 
@@ -6653,7 +7196,7 @@ CREATE TABLE IF NOT EXISTS `nano_l_fill` (
   `FILL_DESC_ENG` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`FILL_ID`),
   KEY `FILL_CATEGORY` (`FILL_CATEGORY`)
-) ENGINE=MyISAM AUTO_INCREMENT=66 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=75 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_l_fill`
@@ -6724,7 +7267,16 @@ INSERT INTO `nano_l_fill` (`FILL_ID`, `FILL_CATEGORY`, `FILL_NAME`, `FILL_DESC`,
 (62, 13, 'Cu', '', ''),
 (63, 0, 'multiphase systems', '', ''),
 (64, 6, 'VS2', '', ''),
-(65, 2, 'NiO', '', '');
+(65, 2, 'NiO', '', ''),
+(66, 2, 'TiO2', 'оксид титана', 'Titan oxide'),
+(67, 2, 'MgO', 'оксид магния', 'MgO'),
+(68, 2, 'ZrO2', 'Оксид циркония', 'Zirconia oxide'),
+(69, 2, 'Al2O3', 'Оксид алюминия', 'Aluminum oxide'),
+(70, 14, '-', '-', '-'),
+(71, 8, 'Si', 'несвязанный кремний', 'non-bonded silicon'),
+(72, 8, 'C', 'углерод', 'carbon'),
+(73, 1, 'Co', 'Кобальт', 'Cobalt'),
+(74, 1, 'Ni', 'никель', 'Nickel');
 
 -- --------------------------------------------------------
 
@@ -6741,7 +7293,7 @@ CREATE TABLE IF NOT EXISTS `nano_l_matrix` (
   `MATRIX_NAME_DESC` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`MATRIX_ID`),
   KEY `MATRIX_CATEGORY` (`MATRIX_CATEGORY`)
-) ENGINE=MyISAM AUTO_INCREMENT=196 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=202 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_l_matrix`
@@ -6910,7 +7462,13 @@ INSERT INTO `nano_l_matrix` (`MATRIX_ID`, `MATRIX_CATEGORY`, `MATRIX_NAME`, `MAT
 (192, 2, 'ZnO', '', NULL),
 (193, 6, 'CdS', '', NULL),
 (194, 2, 'Ta2O5', '', NULL),
-(195, 11, 'PEL', 'Polyethylene-layered', NULL);
+(195, 11, 'PEL', 'Polyethylene-layered', NULL),
+(196, 12, 'Al2O3', 'Al₂O₃', NULL),
+(197, 12, 'ZrO2', 'Zirconia oxide', ''),
+(198, 12, 'SiC', 'Silicon carbide', 'NULL'),
+(199, 12, 'B4C', 'Boron carbide', 'NULL'),
+(200, 12, 'TiB2', 'Titanium diboride', 'NULL'),
+(201, 12, 'WC', 'wolfram carbide', 'NULL');
 
 -- --------------------------------------------------------
 
@@ -7076,7 +7634,7 @@ CREATE TABLE IF NOT EXISTS `nano_l_questions` (
   `active` int(11) NOT NULL DEFAULT '1',
   PRIMARY KEY (`QUESTION_ID`),
   KEY `QUESTION_GROUP_ID` (`QUESTION_GROUP_ID`)
-) ENGINE=MyISAM AUTO_INCREMENT=240 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=263 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_l_questions`
@@ -7288,7 +7846,30 @@ INSERT INTO `nano_l_questions` (`QUESTION_ID`, `QUESTION_GROUP_ID`, `QUESTION_NA
 (236, 0, '', 'reduced modulus', '', 1),
 (237, 10, '', 'Linear range', '', 1),
 (238, 10, '', 'Particle diameter', '', 1),
-(239, 10, '', 'Discharge capacity', '', 1);
+(239, 10, '', 'Discharge capacity', '', 1),
+(240, 10, 'плотность', 'density', '', 1),
+(241, 9, 'линейный коэффициент теплового расширения', 'Linear thermal expansion coefficient', '', 1),
+(242, 10, 'предел прочности при изгибе', 'ultimate bending strength', '', 1),
+(243, 10, 'микротвёрдость', 'microhardness', '', 1),
+(244, 10, 'Ударная прочность', 'impact strength', '', 1),
+(245, 7, 'Содержание матрицы в нанокомпозите', 'Matrix fraction of nanocomposite', '', 1),
+(246, 10, 'площадь поверхности', 'surface area', '', 1),
+(247, 10, 'средний размер частиц матрицы', 'Average particles size of matrix', '', 1),
+(248, 10, 'средний размер частиц наполнителя', 'Average particles size of fill', '', 1),
+(249, 10, 'Модуль Вейбулла', 'Weibull modulus', '', 1),
+(250, 10, 'нормализованная прочность материала', 'normalised material strength', '', 1),
+(251, 10, 'Твердость по Виккерсу', 'Vickers hardness', '', 1),
+(252, 10, 'критический коэффициент интенсивности напряжений I моды деформаций', 'the critical stress intensity factor I of the deformation mode', '', 1),
+(253, 10, 'Средний размер зерна матрицы', 'Average grain size of matrix', '', 1),
+(254, 10, 'Средний размер зерна наполнителя', 'Average grain size of fill', '', 1),
+(255, 1, 'микроструктура (репер)', 'microstructure', '', 1),
+(256, 10, 'трещиностойкость', 'crack resistance', '', 1),
+(257, 10, 'Микротвердость зёрен SiC', 'Microhardness of SiC grain', '', 1),
+(258, 10, 'Пористость (%)', 'Porosity', '', 1),
+(259, 10, 'коэффициент Пуассона', 'ratio of Poisson', '', 1),
+(260, 10, 'Твёрдость по Роквеллу', 'Rockwell hardness', '', 1),
+(261, 10, 'Коэффициент трения в воде', 'constant of friction in water', '', 1),
+(262, 10, 'балл коррозионной стойкости в морской воде', 'corrosion resistance in sea water', '', 1);
 
 -- --------------------------------------------------------
 
@@ -7337,7 +7918,7 @@ CREATE TABLE IF NOT EXISTS `nano_l_tabulators` (
   `TABULATOR_ID` int(5) NOT NULL AUTO_INCREMENT,
   `TABULATOR_NAME` varchar(255) NOT NULL,
   PRIMARY KEY (`TABULATOR_ID`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `nano_l_tabulators`
@@ -7349,18 +7930,53 @@ INSERT INTO `nano_l_tabulators` (`TABULATOR_ID`, `TABULATOR_NAME`) VALUES
 (2, 'OLD IS Nanotube'),
 (1, 'КУЕ'),
 (3, 'Z'),
-(4, 'Екатерина Порысева');
+(4, 'Екатерина Порысева'),
+(7, 'alexey');
 
 -- --------------------------------------------------------
 
 --
--- Дублирующая структура для представления `questions_and_answers_for_ceramic_composites`
+-- Дублирующая структура для представления `properties_view`
 -- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `questions_and_answers_for_ceramic_composites`;
-CREATE TABLE IF NOT EXISTS `questions_and_answers_for_ceramic_composites` (
-`DATA_ID` int(9)
+DROP VIEW IF EXISTS `properties_view`;
+CREATE TABLE IF NOT EXISTS `properties_view` (
+`КОМПОЗИТ` varchar(255)
+,`МАТРИЦА` varchar(255)
+,`НАПОЛНИТЕЛЬ` varchar(255)
+,`СВОЙСТВО` varchar(255)
+,`ЗНАЧЕНИЕ` text
+,`ЕДИНИЦЫ ИЗМЕРЕНИЯ` text
+);
+
+-- --------------------------------------------------------
+
+--
+-- Дублирующая структура для представления `synthesis_description`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `synthesis_description`;
+CREATE TABLE IF NOT EXISTS `synthesis_description` (
+`КОМПОЗИТ` varchar(255)
+,`МАТРИЦА` varchar(255)
+,`НАПОЛНИТЕЛЬ` varchar(255)
+,`ВОПРОС` varchar(255)
+,`ОТВЕТ` text
+);
+
+-- --------------------------------------------------------
+
+--
+-- Дублирующая структура для представления `target_properties`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `target_properties`;
+CREATE TABLE IF NOT EXISTS `target_properties` (
+`MATRIX_NAME` varchar(255)
+,`name` varchar(255)
+,`FILL_NAME` varchar(255)
 ,`QUESTION_NAME` varchar(255)
+,`QUESTION_NAME_ENG` varchar(255)
 ,`ANSWER_TEXT` text
 ,`ANSWER_NAME` text
 );
@@ -7384,26 +8000,62 @@ CREATE TABLE IF NOT EXISTS `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `password`) VALUES
-(1, 'user', 'bb035eec33c489c71279ab505654f40f'),
-(2, 'alexey', 'alexey');
+(2, 'alexey', 'alexey'),
+(1, 'alexey', 'a4a23c4141b4b238a02ec479603fef08');
 
 -- --------------------------------------------------------
 
 --
--- Структура для представления `info_about_ceramic_composites`
+-- Структура для представления `application_area`
 --
-DROP TABLE IF EXISTS `info_about_ceramic_composites`;
+DROP TABLE IF EXISTS `application_area`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `info_about_ceramic_composites`  AS  select `nla`.`ARTICLE_NAME` AS `ARTICLE_NAME`,`nla`.`YEAR_ID` AS `YEAR_ID`,`nla`.`JOURNAL_NAME` AS `JOURNAL_NAME`,`nla`.`AUTHORS` AS `AUTHORS`,`nla`.`COUNTRY_ID` AS `COUNTRY_ID`,`nlm`.`MATRIX_NAME` AS `MATRIX_NAME`,`nlf`.`FILL_NAME` AS `FILL_NAME`,`nlc`.`full_name` AS `full_name` from ((((`nano_f_datum` `nfd` join `nano_l_articles` `nla`) join `nano_l_matrix` `nlm`) join `nano_l_fill` `nlf`) join `nano_l_composite` `nlc`) where ((`nla`.`ARTICLE_ID` = `nfd`.`ARTICLE_ID`) and (`nlm`.`MATRIX_ID` = `nfd`.`MATRIX_ID`) and (`nlf`.`FILL_ID` = `nfd`.`FILL_ID`) and (`nlc`.`id` = `nfd`.`COMPOSITE_ID`) and `nfd`.`MATRIX_ID` in (select `nlm`.`MATRIX_ID` from (`nano_l_matrix` `nlm` join `category_matrix` `cm`) where ((`nlm`.`MATRIX_CATEGORY` = `cm`.`id`) and (`cm`.`name` = 'Керамика')))) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `application_area`  AS  select `nlc`.`name` AS `КОМПОЗИТ`,`nlm`.`MATRIX_NAME` AS `МАТРИЦА`,`nlf`.`FILL_NAME` AS `НАПОЛНИТЕЛЬ`,`nfa`.`ANSWER_TEXT` AS `ОБЛАСТЬ ПРИМЕНЕНИЯ` from (((((((`nano_l_questions` `nlq` join `nano_l_answers` `nla`) join `nano_f_answers` `nfa`) join `nano_f_datum` `nfd`) join `nano_l_matrix` `nlm`) join `category_matrix` `cm`) join `nano_l_composite` `nlc`) join `nano_l_fill` `nlf`) where ((`nlq`.`QUESTION_ID` = `nla`.`QUESTION_ID`) and (`nla`.`ANSWER_ID` = `nfa`.`ANSWER_ID`) and (`nla`.`QUESTION_ID` = `nfa`.`QUESTION_ID`) and (`nfa`.`DATA_ID` = `nfd`.`DATA_ID`) and (`nfd`.`MATRIX_ID` = `nlm`.`MATRIX_ID`) and (`nfd`.`FILL_ID` = `nlf`.`FILL_ID`) and (`cm`.`id` = `nlm`.`MATRIX_CATEGORY`) and (`cm`.`name` = 'Керамика') and (`nfd`.`DATA_ID` <> 367) and (`nlc`.`id` = `nfd`.`COMPOSITE_ID`) and (`nlq`.`QUESTION_GROUP_ID` = 4)) ;
 
 -- --------------------------------------------------------
 
 --
--- Структура для представления `questions_and_answers_for_ceramic_composites`
+-- Структура для представления `articles`
 --
-DROP TABLE IF EXISTS `questions_and_answers_for_ceramic_composites`;
+DROP TABLE IF EXISTS `articles`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `questions_and_answers_for_ceramic_composites`  AS  select `nfa`.`DATA_ID` AS `DATA_ID`,`nlq`.`QUESTION_NAME` AS `QUESTION_NAME`,`nfa`.`ANSWER_TEXT` AS `ANSWER_TEXT`,`nla`.`ANSWER_NAME` AS `ANSWER_NAME` from ((`nano_l_answers` `nla` join `nano_l_questions` `nlq`) join `nano_f_answers` `nfa`) where ((`nlq`.`QUESTION_ID` = `nla`.`QUESTION_ID`) and (`nla`.`ANSWER_ID` = `nfa`.`ANSWER_ID`) and `nfa`.`DATA_ID` in (select `nfa`.`DATA_ID` from (((`nano_l_matrix` `nlm` join `category_matrix` `cm`) join `nano_f_datum` `nfd`) join `nano_f_answers` `nfa`) where ((`nlm`.`MATRIX_CATEGORY` = `cm`.`id`) and (`nfd`.`MATRIX_ID` = `nlm`.`MATRIX_ID`) and (`nfa`.`DATA_ID` = `nfd`.`DATA_ID`) and (`cm`.`name` = 'Керамика')))) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `articles`  AS  select `nlc`.`name` AS `КОМПОЗИТ`,`nla`.`ARTICLE_NAME` AS `СТАТЬЯ`,`nla`.`YEAR_ID` AS `ГОД ИЗДАНИЯ`,`nla`.`JOURNAL_NAME` AS `ЖУРНАЛ`,`nla`.`PAGES` AS `СТРАНИЦЫ`,`nla`.`AUTHORS` AS `АВТОРЫ`,`nc`.`COUNTRY_NAME` AS `СТРАНА`,`nla`.`FILE` AS `ИСТОЧНИК` from (((((`nano_f_datum` `nfd` join `nano_l_articles` `nla`) join `nano_l_composite` `nlc`) join `nano_countries` `nc`) join `nano_l_matrix` `nlm`) join `category_matrix` `cm`) where ((`nla`.`ARTICLE_ID` = `nfd`.`ARTICLE_ID`) and (`nlc`.`id` = `nfd`.`COMPOSITE_ID`) and (`nc`.`COUNTRY_ID` = `nla`.`COUNTRY_ID`) and (`nfd`.`MATRIX_ID` = `nlm`.`MATRIX_ID`) and (`nlm`.`MATRIX_CATEGORY` = `cm`.`id`) and (`nfd`.`DATA_ID` <> 367) and (`cm`.`name` = 'Керамика')) ;
+
+-- --------------------------------------------------------
+
+--
+-- Структура для представления `matrix_kinds`
+--
+DROP TABLE IF EXISTS `matrix_kinds`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `matrix_kinds`  AS  select distinct `nlm`.`MATRIX_NAME` AS `MATRIX_NAME` from ((`nano_l_matrix` `nlm` join `category_matrix` `cm`) join `nano_f_datum` `nfd`) where ((`nlm`.`MATRIX_CATEGORY` = `cm`.`id`) and (`nfd`.`MATRIX_ID` = `nlm`.`MATRIX_ID`) and (`nfd`.`DATA_ID` <> 367) and (`cm`.`name` = 'Керамика')) ;
+
+-- --------------------------------------------------------
+
+--
+-- Структура для представления `properties_view`
+--
+DROP TABLE IF EXISTS `properties_view`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `properties_view`  AS  select `nlc`.`name` AS `КОМПОЗИТ`,`nlm`.`MATRIX_NAME` AS `МАТРИЦА`,`nlf`.`FILL_NAME` AS `НАПОЛНИТЕЛЬ`,`nlq`.`QUESTION_NAME` AS `СВОЙСТВО`,`nfa`.`ANSWER_TEXT` AS `ЗНАЧЕНИЕ`,`nla`.`ANSWER_NAME` AS `ЕДИНИЦЫ ИЗМЕРЕНИЯ` from (((((((`nano_l_answers` `nla` join `nano_l_questions` `nlq`) join `nano_f_answers` `nfa`) join `nano_f_datum` `nfd`) join `nano_l_matrix` `nlm`) join `nano_l_fill` `nlf`) join `nano_l_composite` `nlc`) join `category_matrix` `cm`) where ((`nlq`.`QUESTION_ID` = `nla`.`QUESTION_ID`) and (`nla`.`ANSWER_ID` = `nfa`.`ANSWER_ID`) and (`nla`.`QUESTION_ID` = `nfa`.`QUESTION_ID`) and (`nfa`.`DATA_ID` = `nfd`.`DATA_ID`) and (`nlc`.`id` = `nfd`.`COMPOSITE_ID`) and (`nlm`.`MATRIX_ID` = `nfd`.`MATRIX_ID`) and (`nlf`.`FILL_ID` = `nfd`.`FILL_ID`) and (`nfd`.`DATA_ID` <> 367) and (`nlm`.`MATRIX_CATEGORY` = `cm`.`id`) and (`cm`.`name` = 'Керамика') and (`nlq`.`QUESTION_GROUP_ID` <> 3) and (`nlq`.`QUESTION_GROUP_ID` <> 4) and (`nlq`.`QUESTION_GROUP_ID` <> 15)) ;
+
+-- --------------------------------------------------------
+
+--
+-- Структура для представления `synthesis_description`
+--
+DROP TABLE IF EXISTS `synthesis_description`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `synthesis_description`  AS  select `nlc`.`name` AS `КОМПОЗИТ`,`nlm`.`MATRIX_NAME` AS `МАТРИЦА`,`nlf`.`FILL_NAME` AS `НАПОЛНИТЕЛЬ`,`nlq`.`QUESTION_NAME` AS `ВОПРОС`,`nfa`.`ANSWER_TEXT` AS `ОТВЕТ` from (((((((`nano_l_questions` `nlq` join `nano_l_answers` `nla`) join `nano_f_answers` `nfa`) join `nano_f_datum` `nfd`) join `nano_l_matrix` `nlm`) join `category_matrix` `cm`) join `nano_l_composite` `nlc`) join `nano_l_fill` `nlf`) where ((`nlq`.`QUESTION_ID` = `nla`.`QUESTION_ID`) and (`nla`.`ANSWER_ID` = `nfa`.`ANSWER_ID`) and (`nla`.`QUESTION_ID` = `nfa`.`QUESTION_ID`) and (`nfa`.`DATA_ID` = `nfd`.`DATA_ID`) and (`nfd`.`MATRIX_ID` = `nlm`.`MATRIX_ID`) and (`nfd`.`FILL_ID` = `nlf`.`FILL_ID`) and (`cm`.`id` = `nlm`.`MATRIX_CATEGORY`) and (`cm`.`name` = 'Керамика') and (`nfd`.`DATA_ID` <> 367) and (`nlc`.`id` = `nfd`.`COMPOSITE_ID`) and ((`nlq`.`QUESTION_GROUP_ID` = 3) or (`nlq`.`QUESTION_GROUP_ID` = 15))) ;
+
+-- --------------------------------------------------------
+
+--
+-- Структура для представления `target_properties`
+--
+DROP TABLE IF EXISTS `target_properties`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `target_properties`  AS  select `nlm`.`MATRIX_NAME` AS `MATRIX_NAME`,`nlc`.`name` AS `name`,`nlf`.`FILL_NAME` AS `FILL_NAME`,`nlq`.`QUESTION_NAME` AS `QUESTION_NAME`,`nlq`.`QUESTION_NAME_ENG` AS `QUESTION_NAME_ENG`,`nfa`.`ANSWER_TEXT` AS `ANSWER_TEXT`,`nla`.`ANSWER_NAME` AS `ANSWER_NAME` from (((((((`nano_l_questions` `nlq` join `nano_l_answers` `nla`) join `nano_f_answers` `nfa`) join `nano_f_datum` `nfd`) join `nano_l_matrix` `nlm`) join `nano_l_fill` `nlf`) join `category_matrix` `cm`) join `nano_l_composite` `nlc`) where ((`nlq`.`QUESTION_ID` = `nla`.`QUESTION_ID`) and (`nla`.`ANSWER_ID` = `nfa`.`ANSWER_ID`) and (`nla`.`QUESTION_ID` = `nfa`.`QUESTION_ID`) and (`nfa`.`DATA_ID` = `nfd`.`DATA_ID`) and (`nfd`.`MATRIX_ID` = `nlm`.`MATRIX_ID`) and (`nlf`.`FILL_ID` = `nfd`.`FILL_ID`) and (`cm`.`id` = `nlm`.`MATRIX_CATEGORY`) and (`cm`.`name` = 'Керамика') and (`nfd`.`DATA_ID` <> 367) and (`nlc`.`id` = `nfd`.`COMPOSITE_ID`)) ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
